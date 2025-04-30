@@ -39,10 +39,18 @@ const Home = ({ isLoggedIn, onLogout }) => {
               <p className="text-gray-600 mb-6">
                 A real-time platform designed to help juniors in college connect with seniors for personalized guidance.
               </p>
-              <div className="flex gap-4">
-                <Button onClick={() => navigate('/login')}>Login</Button>
-                <Button variant="outline" onClick={() => navigate('/register')}>Signup</Button>
-              </div>
+              {!isLoggedIn && (
+                <div className="flex gap-4">
+                  <Button onClick={() => navigate('/login')}>Login</Button>
+                  <Button variant="outline" onClick={() => navigate('/register')}>Signup</Button>
+                </div>
+              )}
+              {isLoggedIn && (
+                <div className="flex gap-4">
+                  <Button onClick={() => navigate('/messages')}>Go to Messages</Button>
+                  <Button variant="outline" onClick={() => navigate('/anonymous')}>Anonymous Chat</Button>
+                </div>
+              )}
             </div>
             <div className="flex justify-center gap-4">
               <div className="w-1/3">

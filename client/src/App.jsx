@@ -6,6 +6,7 @@ import Register from './pages/Register';
 import Messages from './pages/Messages';
 import Profile from './pages/Profile';
 import AnonymousPost from './pages/AnonymousPost';
+import ResourceSharing from './pages/ResourceSharing';
 import * as api from './services/api';
 import './index.css';
 
@@ -104,6 +105,7 @@ function App() {
         <Route path="/messages/:userId" element={isLoggedIn ? <Messages isLoggedIn={isLoggedIn} onLogout={handleLogout} currentUser={currentUser} /> : <Navigate to="/login" />} />
         <Route path="/profile" element={isLoggedIn ? <Profile isLoggedIn={isLoggedIn} onLogout={handleLogout} currentUser={currentUser} onUpdateProfile={handleUpdateProfile} /> : <Navigate to="/login" />} />
         <Route path="/anonymous" element={isLoggedIn ? <AnonymousPost isLoggedIn={isLoggedIn} onLogout={handleLogout} currentUser={currentUser} /> : <Navigate to="/login" />} />
+        <Route path="/resources" element={isLoggedIn ? <ResourceSharing isLoggedIn={isLoggedIn} onLogout={handleLogout} currentUser={currentUser} /> : <Navigate to="/login" />} />
       </Routes>
     </Router>
   );
