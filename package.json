@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "start": "node server.js",
-    "build": "npm install && cd client && rm -rf node_modules package-lock.json && npm install --legacy-peer-deps && npm install vite@latest @vitejs/plugin-react@latest --save-dev && npm install && npm run build && cd .. && node build.js",
+    "build": "npm install && cd client && rm -rf node_modules package-lock.json && npm install --legacy-peer-deps && npm install vite@latest @vitejs/plugin-react@latest --save-dev && npm run build && cd .. && node build.js",
     "dev": "concurrently \"nodemon server.js\" \"cd client && npm run dev\"",
     "server": "nodemon server.js"
   },
@@ -25,8 +25,7 @@
   },
   "devDependencies": {
     "concurrently": "^8.2.2",
-    "nodemon": "^3.1.9",
-    "vite": "^6.3.3"
+    "nodemon": "^3.1.9"
   },
   "engines": {
     "node": ">=18.18.0"
