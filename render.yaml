@@ -2,7 +2,13 @@ services:
   - type: web
     name: glbconnect
     env: node
-    buildCommand: npm install && npm run build
+    nodeVersion: 18.17.0
+    buildCommand: |
+      npm install
+      cd client && npm install --legacy-peer-deps
+      cd client && npm install vite@latest --save-dev
+      cd ..
+      npm run build
     startCommand: npm start
     envVars:
       - key: NODE_ENV

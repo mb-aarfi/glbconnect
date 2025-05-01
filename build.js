@@ -10,7 +10,10 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 async function build() {
   try {
     console.log('Installing client dependencies...');
-    await execAsync('cd client && npm install');
+    await execAsync('cd client && npm install --legacy-peer-deps');
+    
+    console.log('Installing Vite...');
+    await execAsync('cd client && npm install vite@latest --save-dev');
 
     console.log('Building frontend...');
     await execAsync('cd client && npm run build');
