@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "start": "node server.js",
-    "build": "node build.js",
+    "build": "npm install && cd client && npm install --legacy-peer-deps && npm install vite@latest --save-dev && npm run build && cd .. && node build.js",
     "dev": "concurrently \"nodemon server.js\" \"cd client && npm run dev\"",
     "server": "nodemon server.js"
   },

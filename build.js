@@ -9,15 +9,6 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 async function build() {
   try {
-    console.log('Installing client dependencies...');
-    await execAsync('cd client && npm install --legacy-peer-deps');
-    
-    console.log('Installing Vite...');
-    await execAsync('cd client && npm install vite@latest --save-dev');
-
-    console.log('Building frontend...');
-    await execAsync('cd client && npm run build');
-    
     console.log('Copying frontend build to backend...');
     const buildDir = path.join(__dirname, 'client', 'dist');
     const publicDir = path.join(__dirname, 'public');
@@ -35,7 +26,6 @@ async function build() {
     }
     
     console.log('Build completed successfully!');
-    console.log('To start the server, run: node server.js');
   } catch (error) {
     console.error('Build failed:', error);
     process.exit(1);
