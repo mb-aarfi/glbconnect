@@ -7,6 +7,7 @@ services:
       npm install
       cd client && npm install --legacy-peer-deps
       cd client && npm install vite@latest @vitejs/plugin-react@latest --save-dev
+      cd client && npm install
       cd ..
       npm run build
     startCommand: npm start
