@@ -38,5 +38,8 @@
   },
   "engines": {
     "node": ">=18.18.0"
+  },
+  "bin": {
+    "vite": "./node_modules/.bin/vite"
   }
 }
