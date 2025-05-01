@@ -2,7 +2,7 @@ services:
   - type: web
     name: glbconnect
     env: node
-    nodeVersion: 18.17.0
+    nodeVersion: 18.18.0
     buildCommand: npm run build
     startCommand: npm start
     envVars:
@@ -15,4 +15,4 @@ services:
       - key: PORT
         value: 10000
     buildPackages:
-      - nodejs-18.17.0 
+      - nodejs-18.18.0 
