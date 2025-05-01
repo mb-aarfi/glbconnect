@@ -1,5 +1,5 @@
-import { build } from 'vite';
-import react from '@vitejs/plugin-react';
+const { build } = require('vite');
+const react = require('@vitejs/plugin-react');
 
 async function runBuild() {
   try {
