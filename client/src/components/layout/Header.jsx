@@ -17,6 +17,11 @@ const Header = ({ isLoggedIn, onLogout }) => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // Close mobile menu when location changes
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [location]);
+
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
   };
@@ -31,7 +36,9 @@ const Header = ({ isLoggedIn, onLogout }) => {
   };
 
   const isActive = (path) => {
-    return location.pathname === path;
+    // Check if the current path starts with the given path
+    // This handles nested routes like /messages/123
+    return location.pathname.startsWith(path);
   };
 
   return (
@@ -52,7 +59,7 @@ const Header = ({ isLoggedIn, onLogout }) => {
             <Link 
               to="/" 
               className={`text-sm font-medium transition-colors duration-200 ${
-                isActive('/') 
+                isActive('/') && location.pathname === '/' 
                   ? 'text-primary' 
                   : 'text-gray-600 hover:text-primary'
               }`}
@@ -120,14 +127,22 @@ const Header = ({ isLoggedIn, onLogout }) => {
                     <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-1 z-10 border border-gray-100">
                       <Link
                         to="/profile"
-                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-200"
+                        className={`block px-4 py-2 text-sm transition-colors duration-200 ${
+                          isActive('/profile')
+                            ? 'text-primary bg-primary/10'
+                            : 'text-gray-700 hover:bg-gray-50'
+                        }`}
                         onClick={() => setIsUserMenuOpen(false)}
                       >
                         Profile
                       </Link>
                       <Link
                         to="/settings"
-                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-200"
+                        className={`block px-4 py-2 text-sm transition-colors duration-200 ${
+                          isActive('/settings')
+                            ? 'text-primary bg-primary/10'
+                            : 'text-gray-700 hover:bg-gray-50'
+                        }`}
                         onClick={() => setIsUserMenuOpen(false)}
                       >
                         Settings
@@ -150,7 +165,11 @@ const Header = ({ isLoggedIn, onLogout }) => {
               <div className="flex items-center space-x-4">
                 <Link 
                   to="/login" 
-                  className="text-sm font-medium text-gray-600 hover:text-primary transition-colors duration-200"
+                  className={`text-sm font-medium transition-colors duration-200 ${
+                    isActive('/login')
+                      ? 'text-primary'
+                      : 'text-gray-600 hover:text-primary'
+                  }`}
                 >
                   Login
                 </Link>
@@ -204,7 +223,7 @@ const Header = ({ isLoggedIn, onLogout }) => {
             <Link 
               to="/" 
               className={`block px-4 py-2 text-sm font-medium rounded-md transition-colors duration-200 ${
-                isActive('/') 
+                isActive('/') && location.pathname === '/'
                   ? 'bg-primary/10 text-primary' 
                   : 'text-gray-600 hover:bg-gray-50'
               }`}
@@ -284,7 +303,11 @@ const Header = ({ isLoggedIn, onLogout }) => {
               <div className="px-4 space-y-2">
                 <Link 
                   to="/login" 
-                  className="block w-full px-4 py-2 text-sm font-medium text-center text-gray-600 hover:bg-gray-50 rounded-md transition-colors duration-200"
+                  className={`block w-full px-4 py-2 text-sm font-medium text-center rounded-md transition-colors duration-200 ${
+                    isActive('/login')
+                      ? 'bg-primary/10 text-primary'
+                      : 'text-gray-600 hover:bg-gray-50'
+                  }`}
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   Login
