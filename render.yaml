@@ -5,6 +5,9 @@ services:
     nodeVersion: 18.18.0
     buildCommand: |
       npm install
+      cd client && npm install --legacy-peer-deps
+      cd client && npm install vite@latest @vitejs/plugin-react@latest --save-dev
+      cd ..
       npm run build
     startCommand: npm start
     envVars:
