@@ -312,9 +312,7 @@ const Home = ({ isLoggedIn, onLogout }) => {
             <h2 className="text-4xl font-bold mb-6 bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent">
               Our super cool Team
             </h2>
-            <p className="max-w-2xl mx-auto text-lg text-gray-300 leading-relaxed">
-              We are a passionate group of students committed to enhancing the college experience through peer mentorship. Our diverse backgrounds enable us to create a supportive community that helps every student thrive academically and personally.
-            </p>
+            
           </motion.div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
