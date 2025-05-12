@@ -310,7 +310,7 @@ const Home = ({ isLoggedIn, onLogout }) => {
             className="text-center mb-16"
           >
             <h2 className="text-4xl font-bold mb-6 bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent">
-              Connect With Experienced Peers
+              Our super cool Team
             </h2>
             <p className="max-w-2xl mx-auto text-lg text-gray-300 leading-relaxed">
               We are a passionate group of students committed to enhancing the college experience through peer mentorship. Our diverse backgrounds enable us to create a supportive community that helps every student thrive academically and personally.
