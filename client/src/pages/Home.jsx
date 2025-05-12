@@ -319,10 +319,10 @@ const Home = ({ isLoggedIn, onLogout }) => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {[
-              { image: peer1, name: "Thomas Lynn", role: "Web Designer", expertise: "UI/UX Design" },
-              { image: peer2, name: "Alex Reena", role: "Web Development", expertise: "Full Stack" },
-              { image: peer3, name: "Tom Curran", role: "Marketing", expertise: "Digital Marketing" },
-              { image: peer4, name: "David Miller", role: "Digital Marketing", expertise: "Social Media" }
+              { image: peer1, name: "Muhammad Baqir", role: "Web Designer", expertise: "UI/UX Design" },
+              { image: peer2, name: "Nisha Ahmad", role: "Web Development", expertise: "Full Stack" },
+              { image: peer3, name: "Maahi Dhaka", role: "Marketing", expertise: "Digital Marketing" },
+              { image: peer4, name: "Kshitij Dwivedi", role: "Digital Marketing", expertise: "Social Media" }
             ].map((peer, index) => (
               <motion.div
                 key={index}
