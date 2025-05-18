@@ -88,4 +88,22 @@ export const sendAnonymousMessage = async (messageData) => {
   return response.data;
 };
 
+// Resource API calls
+export const getResources = async () => {
+  const response = await api.get('/resources');
+  return response.data;
+};
+
+export const uploadResource = async (resourceData) => {
+  const response = await api.post('/resources', resourceData);
+  return response.data;
+};
+
+export const downloadResource = async (resourceId) => {
+  const response = await api.get(`/resources/${resourceId}/download`, {
+    responseType: 'blob'
+  });
+  return response.data;
+};
+
 export default api; 

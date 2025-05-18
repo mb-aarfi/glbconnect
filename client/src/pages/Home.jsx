@@ -317,10 +317,10 @@ const Home = ({ isLoggedIn, onLogout }) => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {[
-              { image: peer1, name: "Muhammad Baqir", role: "Web Designer", expertise: "UI/UX Design" },
-              { image: peer2, name: "Nisha Ahmad", role: "Web Development", expertise: "Full Stack" },
-              { image: peer3, name: "Maahi Dhaka", role: "Marketing", expertise: "Digital Marketing" },
-              { image: peer4, name: "Kshitij Dwivedi", role: "Digital Marketing", expertise: "Social Media" }
+              { image: peer1, name: "Thomas Lynn", role: "Web Designer", expertise: "UI/UX Design" },
+              { image: peer2, name: "Alex Reena", role: "Web Development", expertise: "Full Stack" },
+              { image: peer3, name: "Tom Curran", role: "Marketing", expertise: "Digital Marketing" },
+              { image: peer4, name: "David Miller", role: "Digital Marketing", expertise: "Social Media" }
             ].map((peer, index) => (
               <motion.div
                 key={index}
@@ -347,6 +347,18 @@ const Home = ({ isLoggedIn, onLogout }) => {
                     <p className="text-gray-400 mb-2">{peer.role}</p>
                     <p className="text-sm text-primary/80">{peer.expertise}</p>
                   </div>
+
+                  <motion.div 
+                    className="mt-4 flex gap-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                    whileHover={{ scale: 1.05 }}
+                  >
+                    <button className="flex-1 bg-primary/20 hover:bg-primary/30 text-white py-2 px-4 rounded-lg transition-colors duration-300">
+                      Connect
+                    </button>
+                    <button className="flex-1 bg-white/10 hover:bg-white/20 text-white py-2 px-4 rounded-lg transition-colors duration-300">
+                      Message
+                    </button>
+                  </motion.div>
                 </div>
               </motion.div>
             ))}
