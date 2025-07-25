@@ -1,0 +1,32 @@
+services:
+  - type: web
+    name: glb-connect-backend
+    env: node
+    repo: https://github.com/glbconnect/GLB.Connect.git # ❗IMPORTANT: Replace with your actual repo URL
+    plan: free
+    branch: main
+    healthCheckPath: /api/health # You may need to create this simple endpoint
+    buildCommand: "npm install && npx prisma migrate deploy && npx prisma generate"
+    startCommand: "npm start"
+    envVars:
+      # You will need to add DATABASE_URL from your free database provider (e.g., Neon)
+      # in the Render dashboard environment settings for this service.
+      - key: JWT_SECRET
+        generateValue: true
+      - key: CLIENT_URL
+        value: https://glb-connect-frontend.onrender.com
+      - key: NODE_ENV
+        value: production
+
+  - type: web
+    name: glb-connect-frontend
+    runtime: static
+    repo: https://github.com/glbconnect/GLB.Connect.git # ❗IMPORTANT: Replace with your actual repo URL
+    branch: main
+    staticPublishPath: ./client/dist
+    buildCommand: "cd client && npm install && npm run build"
+    envVars:
+      - key: VITE_API_URL
+        value: https://glb-connect-backend.onrender.com/api
+      - key: VITE_SOCKET_URL
+        value: https://glb-connect-backend.onrender.com 

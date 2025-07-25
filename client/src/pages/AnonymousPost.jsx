@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import io from 'socket.io-client';
-import Layout from '../components/layout/Layout';
 import * as api from '../services/api';
-import { motion, AnimatePresence } from 'framer-motion';
+import { HiOutlineUserCircle, HiOutlinePaperAirplane } from 'react-icons/hi';
+import { FaMask } from 'react-icons/fa6';
 
 const AnonymousPost = ({ isLoggedIn, onLogout, currentUser }) => {
   const navigate = useNavigate();
@@ -11,61 +11,52 @@ const AnonymousPost = ({ isLoggedIn, onLogout, currentUser }) => {
   const [newMessage, setNewMessage] = useState('');
   const [guestId] = useState(`Guest${Math.floor(Math.random() * 1000)}`);
   const [socket, setSocket] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
   const messagesEndRef = useRef(null);
-  const [isTyping, setIsTyping] = useState(false);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
   useEffect(() => {
-    const fetchMessages = async () => {
-      try {
-        setIsLoading(true);
-        const response = await api.getAnonymousMessages();
-        setMessages(response || []);
-      } catch (error) {
-        console.error('Error fetching messages:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+    // Connect to WebSocket server
+    const authData = localStorage.getItem('auth');
+    if (authData) {
+      const { token } = JSON.parse(authData);
+      const socketUrl = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000';
+      const newSocket = io(socketUrl, {
+        auth: { token }
+      });
 
-    fetchMessages();
+      newSocket.on('connect', () => {
+        newSocket.emit('join-room', 'anonymous-chat');
+      });
 
-    const newSocket = io('http://localhost:5000', {
-      transports: ['websocket'],
-      reconnection: true,
-      reconnectionAttempts: 5,
-      reconnectionDelay: 1000,
-    });
+      newSocket.on('anonymous-message', (message) => {
+        setMessages(prevMessages => [...prevMessages, message]);
+      });
 
-    newSocket.on('connect', () => {
-      console.log('Connected to WebSocket server');
-    });
+      setSocket(newSocket);
 
-    newSocket.on('connect_error', (error) => {
-      console.error('Socket connection error:', error);
-    });
+      const fetchMessages = async () => {
+        try {
+          const response = await api.getAnonymousMessages();
+          setMessages(response);
+        } catch (error) {
+          console.error('Error fetching messages:', error);
+        }
+      };
 
-    newSocket.on('anonymous-message', (message) => {
-      console.log('Received new message:', message);
-      setMessages(prevMessages => [...prevMessages, message]);
-    });
+      fetchMessages();
 
-    setSocket(newSocket);
-
-    return () => {
-      newSocket.close();
-    };
+      return () => {
+        newSocket.close();
+      };
+    }
   }, []);
 
   useEffect(() => {
-    if (!isLoading) {
-      scrollToBottom();
-    }
-  }, [messages, isLoading]);
+    scrollToBottom();
+  }, [messages]);
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
@@ -78,8 +69,6 @@ const AnonymousPost = ({ isLoggedIn, onLogout, currentUser }) => {
     };
 
     try {
-      socket.emit('anonymous-message', messageData);
-      setMessages(prevMessages => [...prevMessages, messageData]);
       await api.sendAnonymousMessage(messageData);
       setNewMessage('');
     } catch (error) {
@@ -88,166 +77,115 @@ const AnonymousPost = ({ isLoggedIn, onLogout, currentUser }) => {
   };
 
   return (
-    <Layout isLoggedIn={isLoggedIn} onLogout={onLogout}>
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="max-w-4xl mx-auto h-[calc(100vh-8rem)]"
-      >
-        <div className="bg-white rounded-xl shadow-xl overflow-hidden h-full flex flex-col">
-          {/* Header */}
-          <div className="p-4 bg-gradient-to-r from-blue-500 to-blue-600 text-white">
-            <div className="flex justify-between items-center">
-              <motion.h1 
-                initial={{ x: -20, opacity: 0 }}
-                animate={{ x: 0, opacity: 1 }}
-                transition={{ delay: 0.2 }}
-                className="text-xl font-bold"
-              >
-                Anonymous Chat
-              </motion.h1>
-              <motion.div 
-                initial={{ x: 20, opacity: 0 }}
-                animate={{ x: 0, opacity: 1 }}
-                transition={{ delay: 0.3 }}
-                className="flex items-center space-x-2"
-              >
-                <span className="text-sm bg-white/20 px-3 py-1 rounded-full">
-                  {guestId}
-                </span>
-              </motion.div>
+    <div className="h-screen bg-gradient-to-br from-blue-50 via-white to-blue-100 px-2 sm:px-4 md:px-8 pt-20 pb-2 md:pb-4 overflow-hidden relative z-10 flex items-center justify-center">
+      <div className="max-w-3xl w-full h-[85vh] flex flex-col">
+        <div className="bg-white/80 backdrop-blur-md rounded-3xl shadow-2xl overflow-hidden flex flex-col h-full border border-blue-100 relative z-20">
+          {/* Chat Header */}
+          <div className="p-3 md:p-4 bg-blue-500 text-white flex flex-col md:flex-row justify-between items-start md:items-center gap-2 md:gap-0 flex-shrink-0">
+            <div className="flex items-center gap-3">
+              <span className="text-2xl"><FaMask /></span>
+              <h1 className="text-2xl font-extrabold tracking-tight drop-shadow">Anonymous Posting</h1>
+            </div>
+            <div className="bg-white/20 px-4 py-1 rounded-full text-sm font-semibold flex items-center gap-2 shadow">
+              <HiOutlineUserCircle className="text-lg" />
+              <span>Posting as:</span>
+              <span className="font-bold">{guestId}</span>
             </div>
           </div>
 
-          {/* Messages Container */}
-          <div className="flex-1 overflow-y-auto p-4 bg-gray-50" id="messages-container">
-            {isLoading ? (
-              <div className="flex h-full items-center justify-center">
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="text-gray-500"
+          {/* Chat Messages */}
+          <div className="flex-1 overflow-y-auto p-2 md:p-4 space-y-4" id="messages-container">
+            {messages.map((message, index) => {
+              const isOwn = message.guestId === guestId;
+              return (
+                <div
+                  key={index}
+                  className={`flex items-end gap-2 ${isOwn ? 'justify-end' : 'justify-start'} animate-fadeIn`}
                 >
-                  Loading messages...
-                </motion.div>
-              </div>
-            ) : messages.length === 0 ? (
-              <div className="flex h-full items-center justify-center">
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="text-gray-500 text-center"
-                >
-                  <p className="text-lg mb-2">No messages yet</p>
-                  <p className="text-sm">Be the first to start the conversation!</p>
-                </motion.div>
-              </div>
-            ) : (
-              <AnimatePresence>
-                {messages.map((message, index) => (
-                  <motion.div
-                    key={index}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, x: message.guestId === guestId ? 100 : -100 }}
-                    transition={{ duration: 0.3 }}
-                    className={`flex ${message.guestId === guestId ? 'justify-end' : 'justify-start'} mb-2`}
+                  {!isOwn && (
+                    <div className="flex-shrink-0">
+                      <div className="w-9 h-9 rounded-full bg-blue-200 flex items-center justify-center shadow">
+                        <FaMask className="text-blue-500 text-xl" />
+                      </div>
+                    </div>
+                  )}
+                  <div
+                    className={`max-w-[70%] rounded-2xl px-5 py-3 shadow-md relative transition-all duration-200 ${
+                      isOwn
+                        ? 'bg-gradient-to-br from-blue-500 to-blue-400 text-white rounded-br-none'
+                        : 'bg-white border border-blue-100 text-gray-800 rounded-bl-none'
+                    }`}
                   >
-                    <motion.div
-                      whileHover={{ scale: 1.02 }}
-                      className={`max-w-[70%] rounded-2xl p-3 ${
-                        message.guestId === guestId
-                          ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white'
-                          : 'bg-white shadow-sm'
-                      }`}
-                    >
-                      <div className="flex items-center space-x-2 mb-1">
-                        <div className={`w-2 h-2 rounded-full ${
-                          message.guestId === guestId ? 'bg-white/50' : 'bg-blue-500'
-                        }`} />
-                        <div className="font-semibold text-xs">
-                          {message.guestId}
-                        </div>
+                    <div className={`font-semibold text-xs mb-1 ${isOwn ? 'text-blue-100' : 'text-blue-500'}`}>{message.guestId}</div>
+                    <p className="break-words leading-relaxed text-base">{message.content}</p>
+                    <div className="text-[10px] mt-2 opacity-60 text-right select-none">
+                      {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </div>
+                  </div>
+                  {isOwn && (
+                    <div className="flex-shrink-0">
+                      <div className="w-9 h-9 rounded-full bg-blue-500 flex items-center justify-center shadow">
+                        <FaMask className="text-white text-xl" />
                       </div>
-                      <p className="text-sm">{message.content}</p>
-                      <div className="text-xs mt-1 opacity-70">
-                        {new Date(message.timestamp).toLocaleTimeString([], { 
-                          hour: '2-digit', 
-                          minute: '2-digit' 
-                        })}
-                      </div>
-                    </motion.div>
-                  </motion.div>
-                ))}
-              </AnimatePresence>
-            )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
             <div ref={messagesEndRef} />
           </div>
 
           {/* Input Area */}
-          <div className="border-t border-gray-200 p-3 bg-white">
-            <motion.form 
-              onSubmit={handleSendMessage} 
-              className="flex gap-2 items-center"
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.4 }}
-            >
-              <div className="flex-1 relative">
-                <input
-                  type="text"
-                  value={newMessage}
-                  onChange={(e) => {
-                    setNewMessage(e.target.value);
-                    setIsTyping(true);
-                    setTimeout(() => setIsTyping(false), 1000);
-                  }}
-                  placeholder="Type a message..."
-                  className="w-full rounded-full border border-gray-200 px-4 py-2 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200"
-                />
-                {isTyping && (
-                  <motion.div 
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm"
-                  >
-                    typing...
-                  </motion.div>
-                )}
-              </div>
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
+          <div className="border-t p-3 md:p-4 flex-shrink-0">
+            <form onSubmit={handleSendMessage} className="flex gap-2 flex-col sm:flex-row items-stretch sm:items-center">
+              <input
+                type="text"
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                placeholder="Type your anonymous message..."
+                className="flex-1 rounded-full border border-blue-200 px-5 py-3 focus:outline-none focus:border-blue-400 bg-white/90 shadow-sm text-base transition-all"
+                autoComplete="off"
+              />
+              <button
                 type="submit"
-                className={`rounded-full p-2 w-10 h-10 flex items-center justify-center transition-colors ${
-                  newMessage.trim() 
-                    ? 'bg-blue-500 text-white hover:bg-blue-600' 
-                    : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                }`}
+                className="bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-full p-3 w-12 h-12 flex items-center justify-center shadow-lg hover:scale-105 hover:from-blue-600 hover:to-blue-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={!newMessage.trim()}
+                aria-label="Send"
               >
-                <svg 
-                  className="w-4 h-4" 
-                  fill="none" 
-                  stroke="currentColor" 
-                  viewBox="0 0 24 24"
-                >
-                  <path 
-                    strokeLinecap="round" 
-                    strokeLinejoin="round" 
-                    strokeWidth={2} 
-                    d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" 
-                  />
-                </svg>
-              </motion.button>
-            </motion.form>
+                <HiOutlinePaperAirplane className="text-2xl rotate-45" />
+              </button>
+            </form>
           </div>
         </div>
-      </motion.div>
-    </Layout>
+      </div>
+      <style>{`
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fadeIn {
+          animation: fadeIn 0.4s;
+        }
+        /* Custom scrollbar for all browsers */
+        #messages-container::-webkit-scrollbar {
+          width: 8px;
+          background: #e0e7ff;
+          border-radius: 8px;
+        }
+        #messages-container::-webkit-scrollbar-thumb {
+          background: #60a5fa;
+          border-radius: 8px;
+        }
+        #messages-container:hover::-webkit-scrollbar-thumb {
+          background: #2563eb;
+        }
+        #messages-container {
+          scrollbar-width: thin;
+          scrollbar-color: #60a5fa #e0e7ff;
+        }
+      `}</style>
+    </div>
   );
 };
 
-export default AnonymousPost; 
+export default AnonymousPost;

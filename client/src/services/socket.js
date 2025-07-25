@@ -1,103 +1,189 @@
-import { io } from 'socket.io-client';
+import { io } from "socket.io-client";
 
 let socket;
-// Keep track of recently received message IDs to prevent duplicates
-const messageCache = new Set();
+
+const messageCache = new Set;
+
 const MAX_CACHE_SIZE = 100;
 
-export const initializeSocket = (userId) => {
-  if (!socket) {
-    socket = io('http://localhost:5000', {
-      withCredentials: false,
+export const initializeSocket = userId => {
+    if (socket?.connected) {
+        return socket;
+    }
+    if (socket) {
+        socket.close();
+    }
+    const authData = localStorage.getItem("auth");
+    let token = null;
+    if (authData) {
+        try {
+            const parsedAuth = JSON.parse(authData);
+            token = parsedAuth.token;
+        } catch (error) {
+            console.error("Error parsing auth data:", error);
+            localStorage.removeItem("auth");
+            return null;
+        }
+    }
+    if (!token) {
+        console.warn("No authentication token available for socket connection");
+        return null;
+    }
+    
+    // Get socket URL from environment or construct from API URL
+    let socketUrl = import.meta.env.VITE_SOCKET_URL;
+    if (!socketUrl) {
+        // Fallback: construct from API URL
+        const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+        socketUrl = apiUrl.replace('/api', '');
+    }
+    
+    console.log("Connecting to socket at:", socketUrl);
+    
+    socket = io(socketUrl, {
+        withCredentials: false,
+        auth: {
+            token: token
+        },
+        reconnection: true,
+        reconnectionAttempts: 5,
+        reconnectionDelay: 1e3,
+        timeout: 10000, // 10 second timeout
+        forceNew: true
     });
-  }
-
-  // Connect and identify the user
-  socket.connect();
-  socket.emit('join', userId);
-
-  return socket;
+    
+    socket.on("connect", () => {
+        console.log("Socket connected successfully");
+        socket.emit("join", userId);
+    });
+    
+    socket.on("connect_error", error => {
+        console.error("Socket connection error:", error);
+        // Don't show error to user if it's just a connection issue
+        if (error.message.includes('CORS') || error.message.includes('timeout')) {
+            console.warn("Socket connection failed due to CORS or timeout - this is expected in some environments");
+        }
+    });
+    
+    socket.on("error", error => {
+        console.error("Socket error:", error);
+        if (error.message === "Authentication required" || error.message === "Invalid token") {
+            socket.close();
+        }
+    });
+    
+    socket.on("disconnect", (reason) => {
+        console.log("Socket disconnected:", reason);
+    });
+    
+    return socket;
 };
 
 export const disconnectSocket = () => {
-  if (socket) {
-    socket.disconnect();
-  }
+    if (socket) {
+        socket.disconnect();
+    }
 };
 
-export const sendMessage = (data) => {
-  if (socket) {
-    socket.emit('send_message', data);
-  }
+export const sendMessage = data => {
+    if (socket && socket.connected) {
+        socket.emit("send_message", data);
+    } else {
+        console.warn("Socket not connected, cannot send message");
+    }
 };
 
-// Function to add message to cache to prevent duplicates
-const addToMessageCache = (messageId) => {
-  messageCache.add(messageId);
-  
-  // Keep cache size reasonable by removing oldest entries
-  if (messageCache.size > MAX_CACHE_SIZE) {
-    const iterator = messageCache.values();
-    messageCache.delete(iterator.next().value);
-  }
+const addToMessageCache = messageId => {
+    messageCache.add(messageId);
+    if (messageCache.size > MAX_CACHE_SIZE) {
+        const iterator = messageCache.values();
+        messageCache.delete(iterator.next().value);
+    }
 };
 
-// Function to check if message is already in cache
-const isMessageCached = (messageId) => {
-  return messageCache.has(messageId);
+const isMessageCached = messageId => messageCache.has(messageId);
+
+export const listenForMessages = callback => {
+    if (socket && socket.connected) {
+        socket.off("receive_message");
+        socket.on("receive_message", message => {
+            if (message.id && !isMessageCached(message.id)) {
+                addToMessageCache(message.id);
+                callback(message);
+            }
+        });
+    } else {
+        console.warn("Socket not connected, cannot listen for messages");
+    }
 };
 
-export const listenForMessages = (callback) => {
-  if (socket) {
-    // Remove any existing listeners first to prevent duplicates
-    socket.off('receive_message');
-    socket.on('receive_message', (message) => {
-      // Only process message if it's not already cached
-      if (message.id && !isMessageCached(message.id)) {
-        // Add to cache to prevent processing again
-        addToMessageCache(message.id);
-        callback(message);
-      }
-    });
-  }
+export const listenForTyping = callback => {
+    if (socket && socket.connected) {
+        socket.off("user_typing");
+        socket.on("user_typing", data => {
+            callback(data);
+        });
+    }
 };
 
-export const listenForTyping = (callback) => {
-  if (socket) {
-    // Remove any existing listeners first to prevent duplicates
-    socket.off('user_typing');
-    socket.on('user_typing', (data) => {
-      callback(data);
-    });
-  }
-};
-
-export const emitTyping = (data) => {
-  if (socket) {
-    socket.emit('typing', data);
-  }
+export const emitTyping = data => {
+    if (socket && socket.connected) {
+        socket.emit("typing", data);
+    }
 };
 
 export const removeAllListeners = () => {
-  if (socket) {
-    socket.off();
-  }
+    if (socket) {
+        socket.off();
+    }
 };
 
 export const clearMessageCache = () => {
-  messageCache.clear();
+    messageCache.clear();
 };
 
 export const getSocket = () => socket;
 
+export function subscribeToEventUpdates(callbacks) {
+    if (!socket || !socket.connected) {
+        console.warn("Socket not connected, cannot subscribe to event updates");
+        return;
+    }
+    socket.on("event:new", callbacks.onNewEvent);
+    socket.on("event:update", callbacks.onUpdateEvent);
+    socket.on("event:delete", callbacks.onDeleteEvent);
+    socket.on("event:register", callbacks.onRegister);
+    socket.on("event:unregister", callbacks.onUnregister);
+}
+
+export function emitEventRegister(data) {
+    if (socket && socket.connected) socket.emit("event:register", data);
+}
+
+export function emitEventUnregister(data) {
+    if (socket && socket.connected) socket.emit("event:unregister", data);
+}
+
+export function emitEventNew(event) {
+    if (socket && socket.connected) socket.emit("event:new", event);
+}
+
+export function emitEventUpdate(event) {
+    if (socket && socket.connected) socket.emit("event:update", event);
+}
+
+export function emitEventDelete(event) {
+    if (socket && socket.connected) socket.emit("event:delete", event);
+}
+
 export default {
-  initializeSocket,
-  disconnectSocket,
-  sendMessage,
-  listenForMessages,
-  listenForTyping,
-  emitTyping,
-  removeAllListeners,
-  clearMessageCache,
-  getSocket
-}; 
+    initializeSocket: initializeSocket,
+    disconnectSocket: disconnectSocket,
+    sendMessage: sendMessage,
+    listenForMessages: listenForMessages,
+    listenForTyping: listenForTyping,
+    emitTyping: emitTyping,
+    removeAllListeners: removeAllListeners,
+    clearMessageCache: clearMessageCache,
+    getSocket: getSocket
+};

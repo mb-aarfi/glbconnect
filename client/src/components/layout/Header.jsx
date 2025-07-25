@@ -1,332 +1,249 @@
-import React, { useState, useEffect } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
+import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import Button from '../ui/Button';
+import logo from '../../assets/logo.png';
+import { FaUserCircle } from 'react-icons/fa';
+import { FiBell } from 'react-icons/fi';
 
-const Header = ({ isLoggedIn, onLogout }) => {
+const navLinks = [
+  { to: '/', label: 'Home', public: true },
+  { to: '/jobs', label: 'Jobs' },
+  { to: '/events', label: 'Events' },
+  { to: '/messages', label: 'Messages' },
+  { to: '/anonymous-post', label: 'Anonymous Chat' },
+  { to: '/resources', label: 'Resources' },
+  { to: '/qa-threads', label: 'Q&A Threads' },
+];
+
+const NavLinkItem = ({ to, children, onClick, isActive, disabled }) => (
+  <NavLink
+    to={to}
+    onClick={disabled ? (e) => { e.preventDefault(); onClick && onClick(e); } : onClick}
+    className={({ isActive: navActive }) =>
+      `px-4 py-2 rounded-full text-base font-normal transition-colors duration-200 ${
+        (isActive ?? navActive)
+          ? 'bg-blue-600 text-white shadow-sm'
+          : disabled
+            ? 'text-gray-400 cursor-not-allowed'
+            : 'text-gray-700 hover:bg-blue-500 hover:text-white'
+      }`
+    }
+    tabIndex={disabled ? -1 : 0}
+    aria-disabled={disabled}
+  >
+    {children}
+  </NavLink>
+);
+
+const MobileNavLinkItem = ({ to, children, onClick, isActive, disabled }) => (
+  <NavLink
+    to={to}
+    onClick={disabled ? (e) => { e.preventDefault(); onClick && onClick(e); } : onClick}
+    className={({ isActive: navActive }) =>
+      `block px-5 py-3 rounded-full text-base font-normal transition-colors duration-200 ${
+        (isActive ?? navActive)
+          ? 'bg-blue-600 text-white shadow-sm'
+          : disabled
+            ? 'text-gray-400 cursor-not-allowed'
+            : 'text-gray-700 hover:bg-blue-500 hover:text-white'
+      }`
+    }
+    tabIndex={disabled ? -1 : 0}
+    aria-disabled={disabled}
+  >
+    {children}
+  </NavLink>
+)
+
+const Header = ({ isLoggedIn, onLogout, notificationCount, onNotificationClick }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
+  const [showLoginMsg, setShowLoginMsg] = useState(false);
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  const profileMenuRef = useRef();
 
+  // Close dropdown on click outside
   useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 10);
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  // Close mobile menu when location changes
-  useEffect(() => {
-    setIsMobileMenuOpen(false);
-  }, [location]);
-
-  const toggleMobileMenu = () => {
-    setIsMobileMenuOpen(!isMobileMenuOpen);
-  };
-
-  const toggleUserMenu = () => {
-    setIsUserMenuOpen(!isUserMenuOpen);
-  };
+    function handleClickOutside(event) {
+      if (profileMenuRef.current && !profileMenuRef.current.contains(event.target)) {
+        setShowProfileMenu(false);
+      }
+    }
+    if (showProfileMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+    } else {
+      document.removeEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showProfileMenu]);
 
   const handleLogout = () => {
     onLogout();
     navigate('/login');
+    setIsMobileMenuOpen(false);
   };
 
-  const isActive = (path) => {
-    // Check if the current path starts with the given path
-    // This handles nested routes like /messages/123
-    return location.pathname.startsWith(path);
+  const closeMobileMenu = () => setIsMobileMenuOpen(false);
+
+  // Show message for 2 seconds
+  const handleProtectedClick = (e) => {
+    setShowLoginMsg(true);
+    setTimeout(() => setShowLoginMsg(false), 2000);
   };
 
   return (
-    <header className={`fixed w-full z-50 transition-all duration-300 ${
-      scrolled ? 'bg-white/90 backdrop-blur-md shadow-md' : 'bg-white'
-    }`}>
+    <header className="sticky top-0 z-50 w-full bg-white/90 backdrop-blur-lg shadow-lg border-b border-gray-200/80">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link to="/" className="flex items-center group">
-            <span className="text-2xl font-bold bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent group-hover:from-blue-600 group-hover:to-primary transition-all duration-300">
-              GLB.Connect
-            </span>
+          <Link to="/" className="flex items-center">
+            <img src={logo} alt="GLB.Connect" className="h-9 w-auto" />
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-8">
-            <Link 
-              to="/" 
-              className={`text-sm font-medium transition-colors duration-200 ${
-                isActive('/') && location.pathname === '/' 
-                  ? 'text-primary' 
-                  : 'text-gray-600 hover:text-primary'
-              }`}
-            >
-              Home
-            </Link>
-            {isLoggedIn && (
-              <>
-                <Link
-                  to="/messages"
-                  className={`text-sm font-medium transition-colors duration-200 ${
-                    isActive('/messages') 
-                      ? 'text-primary' 
-                      : 'text-gray-600 hover:text-primary'
-                  }`}
-                >
-                  Messages
-                </Link>
-                <Link
-                  to="/anonymous"
-                  className={`text-sm font-medium transition-colors duration-200 ${
-                    isActive('/anonymous') 
-                      ? 'text-primary' 
-                      : 'text-gray-600 hover:text-primary'
-                  }`}
-                >
-                  Anonymous Post
-                </Link>
-                <Link
-                  to="/resources"
-                  className={`text-sm font-medium transition-colors duration-200 ${
-                    isActive('/resources') 
-                      ? 'text-primary' 
-                      : 'text-gray-600 hover:text-primary'
-                  }`}
-                >
-                  Resource Sharing
-                </Link>
-                {/* User Menu Dropdown */}
-                <div className="relative">
+          <nav className="hidden md:flex items-center space-x-2">
+            {navLinks.map((link) => (
+              <NavLinkItem
+                key={link.to}
+                to={link.to}
+                disabled={!isLoggedIn && !link.public}
+                onClick={!isLoggedIn && !link.public ? handleProtectedClick : undefined}
+                isActive={location.pathname === link.to}
+              >
+                {link.label}
+              </NavLinkItem>
+            ))}
+          </nav>
+
+          {/* Auth Buttons, Notification, & Mobile Menu Toggle */}
+          <div className="flex items-center space-x-3">
+            <div className="hidden md:flex items-center space-x-2">
+              {isLoggedIn ? (
+                <>
+                  {/* Notification Bell */}
                   <button
-                    onClick={toggleUserMenu}
-                    className="flex items-center space-x-2 focus:outline-none group"
+                    className="relative text-gray-600 hover:text-blue-600 focus:outline-none"
+                    title="Notifications"
+                    onClick={typeof onNotificationClick === 'function' ? onNotificationClick : undefined}
                   >
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-r from-primary to-blue-600 flex items-center justify-center text-white font-medium">
-                      {isLoggedIn ? 'U' : '?'}
-                    </div>
-                    <svg
-                      className={`w-4 h-4 text-gray-500 transition-transform duration-200 ${
-                        isUserMenuOpen ? 'rotate-180' : ''
-                      }`}
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M19 9l-7 7-7-7"
-                      />
-                    </svg>
+                    <FiBell size={26} />
+                    {notificationCount > 0 && (
+                      <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5 font-bold animate-pulse">
+                        {notificationCount}
+                      </span>
+                    )}
                   </button>
-                  {isUserMenuOpen && (
-                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-1 z-10 border border-gray-100">
-                      <Link
-                        to="/profile"
-                        className={`block px-4 py-2 text-sm transition-colors duration-200 ${
-                          isActive('/profile')
-                            ? 'text-primary bg-primary/10'
-                            : 'text-gray-700 hover:bg-gray-50'
-                        }`}
-                        onClick={() => setIsUserMenuOpen(false)}
-                      >
-                        Profile
-                      </Link>
-                      <Link
-                        to="/settings"
-                        className={`block px-4 py-2 text-sm transition-colors duration-200 ${
-                          isActive('/settings')
-                            ? 'text-primary bg-primary/10'
-                            : 'text-gray-700 hover:bg-gray-50'
-                        }`}
-                        onClick={() => setIsUserMenuOpen(false)}
-                      >
-                        Settings
-                      </Link>
-                      <button
-                        onClick={() => {
-                          handleLogout();
-                          setIsUserMenuOpen(false);
-                        }}
-                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-200"
-                      >
-                        Logout
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </>
-            )}
-            {!isLoggedIn && (
-              <div className="flex items-center space-x-4">
-                <Link 
-                  to="/login" 
-                  className={`text-sm font-medium transition-colors duration-200 ${
-                    isActive('/login')
-                      ? 'text-primary'
-                      : 'text-gray-600 hover:text-primary'
-                  }`}
-                >
-                  Login
-                </Link>
-                <Button 
-                  variant="primary" 
-                  onClick={() => navigate('/register')}
-                  className="px-4 py-2 text-sm"
-                >
-                  Register
-                </Button>
-              </div>
-            )}
-          </nav>
-
-          {/* Mobile Menu Button */}
-          <button 
-            type="button" 
-            className="md:hidden rounded-md p-2 text-gray-500 hover:text-primary focus:outline-none transition-colors duration-200"
-            onClick={toggleMobileMenu}
-          >
-            <svg 
-              className="h-6 w-6" 
-              fill="none" 
-              viewBox="0 0 24 24" 
-              stroke="currentColor"
-            >
-              {isMobileMenuOpen ? (
-                <path 
-                  strokeLinecap="round" 
-                  strokeLinejoin="round" 
-                  strokeWidth={2} 
-                  d="M6 18L18 6M6 6l12 12" 
-                />
+                  {/* Profile Icon */}
+                  <div className="relative" ref={profileMenuRef}>
+                    <button
+                      onClick={() => setShowProfileMenu((v) => !v)}
+                      className="ml-2 text-gray-600 hover:text-blue-600 focus:outline-none"
+                      title="Profile"
+                    >
+                      <FaUserCircle size={32} />
+                    </button>
+                    {showProfileMenu && (
+                      <div className="absolute right-0 mt-2 w-40 bg-white rounded-xl shadow-lg border border-gray-100 z-50 py-2">
+                        <button
+                          className="w-full text-left px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700 rounded-t-xl"
+                          onClick={() => { setShowProfileMenu(false); navigate('/profile'); }}
+                        >
+                          View Profile
+                        </button>
+                        <button
+                          className="w-full text-left px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700 rounded-b-xl"
+                          onClick={() => { setShowProfileMenu(false); onLogout(); navigate('/login'); }}
+                        >
+                          Logout
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </>
               ) : (
-                <path 
-                  strokeLinecap="round" 
-                  strokeLinejoin="round" 
-                  strokeWidth={2} 
-                  d="M4 6h16M4 12h16M4 18h16" 
-                />
+                <>
+                  <Button variant="ghost" size="sm" onClick={() => navigate('/login')}>Login</Button>
+                  <Button size="sm" onClick={() => navigate('/register')}>Register</Button>
+                </>
               )}
-            </svg>
-          </button>
-        </div>
-
-        {/* Mobile Navigation */}
-        <div className={`md:hidden transition-all duration-300 ease-in-out ${
-          isMobileMenuOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
-        } overflow-hidden`}>
-          <nav className="py-4 space-y-2">
-            <Link 
-              to="/" 
-              className={`block px-4 py-2 text-sm font-medium rounded-md transition-colors duration-200 ${
-                isActive('/') && location.pathname === '/'
-                  ? 'bg-primary/10 text-primary' 
-                  : 'text-gray-600 hover:bg-gray-50'
-              }`}
-              onClick={() => setIsMobileMenuOpen(false)}
+            </div>
+            <button 
+              type="button" 
+              className="md:hidden rounded-md p-2 text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             >
-              Home
-            </Link>
-            {isLoggedIn && (
-              <>
-                <Link 
-                  to="/messages" 
-                  className={`block px-4 py-2 text-sm font-medium rounded-md transition-colors duration-200 ${
-                    isActive('/messages') 
-                      ? 'bg-primary/10 text-primary' 
-                      : 'text-gray-600 hover:bg-gray-50'
-                  }`}
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  Messages
-                </Link>
-                <Link 
-                  to="/anonymous" 
-                  className={`block px-4 py-2 text-sm font-medium rounded-md transition-colors duration-200 ${
-                    isActive('/anonymous') 
-                      ? 'bg-primary/10 text-primary' 
-                      : 'text-gray-600 hover:bg-gray-50'
-                  }`}
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  Anonymous Post
-                </Link>
-                <Link 
-                  to="/resources" 
-                  className={`block px-4 py-2 text-sm font-medium rounded-md transition-colors duration-200 ${
-                    isActive('/resources') 
-                      ? 'bg-primary/10 text-primary' 
-                      : 'text-gray-600 hover:bg-gray-50'
-                  }`}
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  Resource Sharing
-                </Link>
-                <Link 
-                  to="/profile" 
-                  className={`block px-4 py-2 text-sm font-medium rounded-md transition-colors duration-200 ${
-                    isActive('/profile') 
-                      ? 'bg-primary/10 text-primary' 
-                      : 'text-gray-600 hover:bg-gray-50'
-                  }`}
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  Profile
-                </Link>
-                <Link 
-                  to="/settings" 
-                  className={`block px-4 py-2 text-sm font-medium rounded-md transition-colors duration-200 ${
-                    isActive('/settings') 
-                      ? 'bg-primary/10 text-primary' 
-                      : 'text-gray-600 hover:bg-gray-50'
-                  }`}
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  Settings
-                </Link>
-                <button
-                  onClick={() => {
-                    handleLogout();
-                    setIsMobileMenuOpen(false);
-                  }}
-                  className="block w-full text-left px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 rounded-md transition-colors duration-200"
-                >
-                  Logout
-                </button>
-              </>
-            )}
-            {!isLoggedIn && (
-              <div className="px-4 space-y-2">
-                <Link 
-                  to="/login" 
-                  className={`block w-full px-4 py-2 text-sm font-medium text-center rounded-md transition-colors duration-200 ${
-                    isActive('/login')
-                      ? 'bg-primary/10 text-primary'
-                      : 'text-gray-600 hover:bg-gray-50'
-                  }`}
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  Login
-                </Link>
-                <Button 
-                  variant="primary" 
-                  onClick={() => {
-                    navigate('/register');
-                    setIsMobileMenuOpen(false);
-                  }}
-                  className="w-full"
-                >
-                  Register
-                </Button>
-              </div>
-            )}
-          </nav>
+              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                {isMobileMenuOpen ? (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                ) : (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m-7 6h7" />
+                )}
+              </svg>
+            </button>
+          </div>
         </div>
       </div>
+      {/* Login required message */}
+      {showLoginMsg && (
+        <div className="fixed top-20 left-1/2 transform -translate-x-1/2 bg-blue-600 text-white px-6 py-2 rounded-full shadow-lg z-50 text-base font-medium animate-fade-in-out">
+          Please log in first
+        </div>
+      )}
+      {/* Mobile Navigation */}
+      {isMobileMenuOpen && (
+        <div className="md:hidden bg-white border-t border-gray-200">
+          <nav className="container mx-auto px-4 pt-4 pb-4 space-y-2">
+            {isLoggedIn && (
+              <div className="flex justify-end mb-2 items-center gap-2">
+                {/* Notification Bell (Mobile) */}
+                <button
+                  className="relative text-gray-600 hover:text-blue-600 focus:outline-none"
+                  title="Notifications"
+                  onClick={typeof onNotificationClick === 'function' ? onNotificationClick : undefined}
+                >
+                  <FiBell size={26} />
+                  {notificationCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5 font-bold animate-pulse">
+                      {notificationCount}
+                    </span>
+                  )}
+                </button>
+                <button
+                  onClick={() => { navigate('/profile'); closeMobileMenu(); }}
+                  className="text-gray-600 hover:text-blue-600 focus:outline-none"
+                  title="Profile"
+                >
+                  <FaUserCircle size={32} />
+                </button>
+              </div>
+            )}
+            {navLinks.map((link) => (
+              <MobileNavLinkItem
+                key={link.to}
+                to={link.to}
+                disabled={!isLoggedIn && !link.public}
+                onClick={!isLoggedIn && !link.public ? handleProtectedClick : closeMobileMenu}
+                isActive={location.pathname === link.to}
+              >
+                {link.label}
+              </MobileNavLinkItem>
+            ))}
+            {isLoggedIn ? (
+              <div className="border-t border-gray-200 mt-4 pt-4">
+                <Button variant="outline" className="w-full" onClick={handleLogout}>
+                  Logout
+                </Button>
+              </div>
+            ) : (
+              <div className="border-t border-gray-200 mt-3 pt-3 flex items-center space-x-3">
+                <Button variant="outline" className="w-full" onClick={() => { navigate('/login'); closeMobileMenu(); }}>Login</Button>
+                <Button className="w-full" onClick={() => { navigate('/register'); closeMobileMenu(); }}>Register</Button>
+              </div>
+            )}
+          </nav>
+        </div>
+      )}
     </header>
   );
 };
