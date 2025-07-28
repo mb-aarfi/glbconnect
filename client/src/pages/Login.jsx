@@ -28,12 +28,12 @@ const Login = ({ onLogin }) => {
     const interval = setInterval(() => {
       setIsSliding(true);
       setTimeout(() => {
-        // After slide, update images: shift left, append next
+        
         const nextIndex = (slideIndex + 1) % studentImages.length;
         setSlideImages([studentImages[nextIndex], studentImages[(nextIndex + 1) % studentImages.length]]);
         setSlideIndex(nextIndex);
         setIsSliding(false);
-      }, 400); // match transition duration
+      }, 400); 
     }, 2500);
     return () => clearInterval(interval);
   }, [slideIndex]);
