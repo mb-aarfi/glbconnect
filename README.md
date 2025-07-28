@@ -98,18 +98,9 @@ cd client
 npm run dev
 ```
 
-## 🏫 Supported Institutions
-- GL Bajaj
-- Galgotia
-- NIET
-- Jamia
-- Bennett
-
 ## 🤝 Contributing
 Contributions are welcome! Please feel free to submit a Pull Request.
 
-## 📝 License
-This project is licensed under the ISC License.
 
 ## 👥 Authors
 - Muhmmad Baqir
